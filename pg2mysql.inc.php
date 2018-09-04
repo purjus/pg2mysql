@@ -161,11 +161,11 @@ function pg2mysql($input, $header = true)
     $table = '';
 
     while (isset($lines[$linenumber])) {
-        $line = str_replace('"public".', '', $lines[$linenumber]);
+        $line = $lines[$linenumber];
 
-        if (substr($line, 0, 12) == "CREATE TABLE") {
+        if (preg_match('/CREATE TABLE (\"?.+\"?\.)?[\"\']?([\w_]+)[\"\']?([\w\W]*)/', $line, $matches)) {
             $in_create_table = true;
-            $line = str_replace("\"", "`", $line);
+            $line = 'CREATE TABLE '.$matches[2].$matches[3];
             $output .= $line;
             $linenumber++;
             continue;
@@ -288,7 +288,7 @@ function pg2mysql($input, $header = true)
             //(ie, field names, like INSERT INTO table ("bla","bla2") VALUES ('s:4:"test"','bladata2');
             //should convert to      INSERT INTO table (`bla`,`bla2`) VALUES ('s:4:"test"','bladata2');
 
-            $before = str_replace("\"", "`", $before);
+            $before = preg_replace('/INSERT INTO (\"?.+\"?\.)?[\"\']?([\w_]+)[\"\']?(.*)/', 'INSERT INTO $2$3', $before);
 
             //in after, we need to watch out for escape format strings, ie (E'escaped \r in a string'), and ('bla',E'escaped \r in a string')
             //ugh i guess its possible these strings could exist IN the data as well, but the only way to solve that is to process these lines one character
@@ -335,7 +335,7 @@ function pg2mysql($input, $header = true)
             }
         }
         if (substr($line, 0, 16) == "ALTER TABLE ONLY") {
-            $line = preg_replace('/ ONLY/', '', $line);
+            $line = preg_replace('/ALTER TABLE ONLY (\"?.+\"?\.)?[\"\']?([\w_]+)[\"\']?/', 'ALTER TABLE $2', $line);
             $line = str_replace("\"", "`", $line);
             $pkey = $line;
 
@@ -356,7 +356,8 @@ function pg2mysql($input, $header = true)
         if (substr($line, 0, 12) == "CREATE INDEX") {
             preg_match('/CREATE INDEX "?([a-zA-Z0-9_]*)"? ON "?([a-zA-Z0-9_]*)"? USING btree \((.*)\);/', $line, $matches);
             if (isset($matches[1]) && isset($matches[2]) && isset($matches[3])) {
-                $tablename = $matches[2];
+                $tablenames = explode('.', $matches[2]);
+                $tablename = end($tablenames);
                 $columns = str_replace("\"", "`", $matches[3]);
                 $output .= "ALTER TABLE `{$tablename}` ADD INDEX ( {$columns} ) ;\n";
             }
