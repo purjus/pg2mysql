@@ -24,12 +24,12 @@ Boston, MA 02111-1307, USA.
 
 include "pg2mysql.inc.php";
 
-if (! ($argv[1] && $argv[2])) {
+if (!($argv[1] && $argv[2])) {
     echo "Usage: php pg2mysql_cli.php <inputfilename> <outputfilename> [engine]\n";
     exit;
 } else {
     if (isset($argv[3])) {
-        $config['engine']=$argv[3];
+        $config['engine'] = $argv[3];
     }
     pg2mysql_large($argv[1], $argv[2]);
 
