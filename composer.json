@@ -1,0 +1,7 @@
+{
+    "name": "purjus/pg2mysql",
+    "description": "Converts PostgreSQL files in MySQL files",
+    "type": "library",
+    "license": "GPL",
+    "minimum-stability": "dev"
+}
